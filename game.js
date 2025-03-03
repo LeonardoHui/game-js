@@ -10,11 +10,19 @@ canvas.height = window.innerHeight;
 const player = {
   x: canvas.width / 2,
   y: canvas.height / 2,
-  width: 50,
-  height: 50,
+  width: 80,
+  height: 100,
   speed: 5, // Movement speed
-  color: "yellow",
+  sprite: new Image(),
+  spriteWidth: 80, // Width of one frame in the sprite sheet
+  spriteHeight: 100, // Height of one frame in the sprite sheet
+  currentFrame: 0, // Index of the current frame in the sprite
+  moving: false, // Flag to indicate if the player is moving
+  direction: "down", // Initial direction is 'down'
 };
+
+// Load the sprite sheet (replace with your sprite image file)
+player.sprite.src = "sprites.png"; // Replace with your sprite image path
 
 // Handle player movement
 const keys = {
@@ -52,24 +60,78 @@ document.addEventListener("keyup", (e) => {
 
 // Update player position based on key input
 function movePlayer() {
+  player.moving = false; // Assume the player is not moving initially
+
   // Prevent the player from going outside the canvas boundaries
-  if (keys.up && player.y > 0) player.y -= player.speed;
-  if (keys.down && player.y + player.height < canvas.height)
+  if (keys.up && player.y > 0) {
+    player.y -= player.speed;
+    player.moving = true;
+    player.direction = "up"; // Moving up
+  }
+  if (keys.down && player.y + player.height < canvas.height) {
     player.y += player.speed;
-  if (keys.left && player.x > 0) player.x -= player.speed;
-  if (keys.right && player.x + player.width < canvas.width)
+    player.moving = true;
+    player.direction = "down"; // Moving down
+  }
+  if (keys.left && player.x > 0) {
+    player.x -= player.speed;
+    player.moving = true;
+    player.direction = "left"; // Moving left
+  }
+  if (keys.right && player.x + player.width < canvas.width) {
     player.x += player.speed;
+    player.moving = true;
+    player.direction = "right"; // Moving right
+  }
 }
 
-// Draw the player on the canvas
+// Update the current frame for the sprite animation
+function updateAnimation() {
+  if (player.moving) {
+    // Change frames based on the direction
+    player.currentFrame = (player.currentFrame + 1) % 4; // Loop through 4 frames
+  } else {
+    player.currentFrame = 0; // If not moving, show the first frame (idle)
+  }
+}
+
+// Draw the player (sprite) on the canvas
 function drawPlayer() {
-  ctx.fillStyle = player.color;
-  ctx.fillRect(player.x, player.y, player.width, player.height);
+  let row = 0; // Default row is 0 (moving down)
+
+  // Determine the row based on the direction
+  switch (player.direction) {
+    case "down":
+      row = 0;
+      break;
+    case "up":
+      row = 1;
+      break;
+    case "right":
+      row = 2;
+      break;
+    case "left":
+      row = 3;
+      break;
+  }
+
+  // Draw the current frame of the sprite for the given direction
+  ctx.drawImage(
+    player.sprite,
+    player.currentFrame * player.spriteWidth, // Source X (frame position)
+    row * player.spriteHeight, // Source Y (frame position)
+    player.spriteWidth, // Width of the frame
+    player.spriteHeight, // Height of the frame
+    player.x, // Destination X on the canvas
+    player.y, // Destination Y on the canvas
+    player.width, // Destination width
+    player.height // Destination height
+  );
 }
 
 // Load the background image
 const backgroundImage = new Image();
-backgroundImage.src = "image.webp"; // Replace with your background image path
+backgroundImage.src = "image.webp";
 
 // Draw background image on the canvas
 function drawBackground() {
@@ -88,8 +150,9 @@ function gameLoop() {
   // Draw the background first
   drawBackground();
 
-  // Update player position
+  // Update player position and animation
   movePlayer();
+  updateAnimation();
 
   // Draw the player
   drawPlayer();
